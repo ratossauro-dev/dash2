@@ -3,15 +3,25 @@ import fs from "fs";
 import path from "path";
 
 export function serveStatic(app: Express) {
-    const distPath =
-        process.env.NODE_ENV === "development"
-            ? path.resolve(import.meta.dirname, "../..", "dist", "public")
-            : path.resolve(import.meta.dirname, "public");
+    // Try standard production path first (dist/public relative to dist/index.js)
+    let distPath = path.resolve(import.meta.dirname, "public");
+
+    // If that doesn't exist, try the development/fallback path
+    if (!fs.existsSync(distPath)) {
+        const fallbackPath = path.resolve(import.meta.dirname, "../..", "dist", "public");
+        if (fs.existsSync(fallbackPath)) {
+            distPath = fallbackPath;
+        }
+    }
 
     if (!fs.existsSync(distPath)) {
         console.error(
-            `Could not find the build directory: ${distPath}, make sure to build the client first`
+            `[Static] Error: Build directory not found. Tried paths: 
+            1. ${path.resolve(import.meta.dirname, "public")}
+            2. ${path.resolve(import.meta.dirname, "../..", "dist", "public")}`
         );
+    } else {
+        console.log(`[Static] Serving files from: ${distPath}`);
     }
 
     app.use(express.static(distPath));
