@@ -12,7 +12,7 @@
     "rewrites": [
         {
             "source": "/api/:path*",
-            "destination": "https://botdashboardbackend.discloud.app/api/:path*"
+            "destination": "https://botdash.discloud.app/api/:path*"
         },
         {
             "source": "/(.*)",
