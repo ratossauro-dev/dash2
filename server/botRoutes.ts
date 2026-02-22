@@ -11,6 +11,7 @@ import {
   insertMedia,
   upsertSubscriber,
   insertSocialAccount,
+  getAllSocialAccounts,
 } from "./db";
 import { notifyOwner } from "./_core/notification";
 
@@ -178,6 +179,20 @@ botRouter.post("/account", async (req, res) => {
       message: `Plataforma: ${platform} | Bot ID: ${auth.botId}`,
     });
     res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── GET /api/bot/social-accounts ────────────────────────────────────────────
+botRouter.get("/social-accounts", async (req, res) => {
+  try {
+    const auth = await authenticate(req, res);
+    if (!auth) return;
+    const accounts = await getAllSocialAccounts();
+    const active = accounts.filter((acc: any) => acc.status === "active");
+    console.log(`[Bot API REST] Bot ${auth.botId} requested accounts. Found: ${active.length} active.`);
+    res.json({ success: true, accounts: active });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
