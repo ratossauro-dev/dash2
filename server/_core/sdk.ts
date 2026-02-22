@@ -98,29 +98,23 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    const cookies = this.parseCookies(req.headers.cookie);
-    const sessionCookie = cookies.get(COOKIE_NAME);
-    const session = await this.verifySession(sessionCookie);
+    // Auto-authenticate as admin (no login required)
+    const adminOpenId = ENV.ownerOpenId;
 
-    if (!session) {
-      throw ForbiddenError("Invalid session cookie");
-    }
-
-    const user = await db.getUserByOpenId(session.openId);
+    let user = await db.getUserByOpenId(adminOpenId);
 
     if (!user) {
-      // Auto-create admin user if it's the configured owner
-      if (session.openId === ENV.ownerOpenId) {
-        await db.upsertUser({
-          openId: ENV.ownerOpenId,
-          name: session.name,
-          role: "admin",
-          lastSignedIn: new Date(),
-        });
-        const newUser = await db.getUserByOpenId(ENV.ownerOpenId);
-        if (newUser) return newUser;
-      }
-      throw ForbiddenError("User not found");
+      await db.upsertUser({
+        openId: adminOpenId,
+        name: "Admin",
+        role: "admin",
+        lastSignedIn: new Date(),
+      });
+      user = await db.getUserByOpenId(adminOpenId);
+    }
+
+    if (!user) {
+      throw ForbiddenError("Could not create admin user");
     }
 
     await db.upsertUser({
