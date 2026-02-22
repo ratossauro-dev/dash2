@@ -1,0 +1,26 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "dist/public"
+            }
+        }
+    ],
+    "rewrites": [
+        {
+            "source": "/api/trpc/:path*",
+            "destination": "https://botdashboardbackend.discloud.app/api/trpc/:path*"
+        },
+        {
+            "source": "/api/bot/:path*",
+            "destination": "https://botdashboardbackend.discloud.app/api/bot/:path*"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}
