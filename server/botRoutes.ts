@@ -9,6 +9,8 @@ import {
   getBotById,
   insertNotification,
   insertMedia,
+  getMediaQueue,
+  updateMediaStatus,
   upsertSubscriber,
   insertSocialAccount,
   getAllSocialAccounts,
@@ -127,6 +129,37 @@ botRouter.post("/media", async (req, res) => {
       targetChannel,
       sourceBotId: auth.botId,
     });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── GET /api/bot/media-pending ──────────────────────────────────────────────
+botRouter.get("/media-pending", async (req, res) => {
+  try {
+    const auth = await authenticate(req, res);
+    if (!auth) return;
+    const { limit } = req.query;
+    const pending = await getMediaQueue("pending", limit ? parseInt(limit as string) : 10);
+    res.json({ success: true, media: pending });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── PATCH /api/bot/media/:id ────────────────────────────────────────────────
+botRouter.patch("/media/:id", async (req, res) => {
+  try {
+    const auth = await authenticate(req, res);
+    if (!auth) return;
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!status) {
+      res.status(400).json({ success: false, error: "status é obrigatório" });
+      return;
+    }
+    await updateMediaStatus(parseInt(id), status);
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

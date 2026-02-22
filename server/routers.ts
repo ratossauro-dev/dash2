@@ -465,6 +465,27 @@ const botApiRouter = router({
       console.log(`[Bot API] Bot ${auth.botId} requested accounts. Found: ${filtered.length} active.`);
       return filtered;
     }),
+
+  listPendingMedia: publicProcedure
+    .input(z.object({ authorization: z.string(), limit: z.number().default(20) }))
+    .query(async ({ input }) => {
+      const auth = await validateBotToken(input.authorization);
+      if (!auth) throw new TRPCError({ code: "UNAUTHORIZED", message: "Token inválido" });
+      return await getMediaQueue("pending", input.limit);
+    }),
+
+  updateMediaStatus: publicProcedure
+    .input(z.object({
+      authorization: z.string(),
+      id: z.number(),
+      status: z.enum(["pending", "posted", "failed", "skipped"]),
+    }))
+    .mutation(async ({ input }) => {
+      const auth = await validateBotToken(input.authorization);
+      if (!auth) return { success: false, error: "Token inválido" };
+      await updateMediaStatus(input.id, input.status);
+      return { success: true };
+    }),
 });
 
 // ─── LLM Assistant Router ─────────────────────────────────────────────────────
