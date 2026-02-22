@@ -5,8 +5,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import {
   LayoutDashboard, Bot, Film, Users, CreditCard, Share2, FileText, MessageSquare,
-  Bell, Settings, ChevronLeft, ChevronRight, Activity, Zap, LogOut, Menu, X, Key
+  Bell, Settings, ChevronLeft, ChevronRight, Activity, Zap, LogOut, Menu, X, Key, Lock
 } from "lucide-react";
+import { toast } from "sonner";
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Overview", color: "pink" },
@@ -48,7 +49,7 @@ function NavItem({ href, icon: Icon, label, color, collapsed }: {
           className={`shrink-0 transition-all ${isActive
             ? isActive && isActive ? (isActive ? (isActive ? (isActive ? (isActive ? (isActive ? (isActive ? "text-[#ff2d78]" : "text-[#00f5ff]") : "text-[#00f5ff]") : "text-[#00f5ff]") : "text-[#00f5ff]") : "text-[#00f5ff]") : "text-[#00f5ff]") : "text-[#00f5ff]"
             : "text-[#6b6b8a] group-hover:text-[#e0e0f0]"
-          }`}
+            }`}
           style={isActive ? { color: isActive ? (color === "pink" ? "#ff2d78" : "#00f5ff") : undefined, filter: isActive ? `drop-shadow(0 0 6px ${color === "pink" ? "#ff2d78" : "#00f5ff"})` : undefined } : {}}
         />
         {!collapsed && (
@@ -70,8 +71,35 @@ function NavItem({ href, icon: Icon, label, color, collapsed }: {
 export default function CyberpunkLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, revalidate } = useAuth();
+  const [password, setPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [time, setTime] = useState(new Date());
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password) return;
+
+    setIsLoggingIn(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      if (res.ok) {
+        toast.success("Acesso autorizado");
+        if (revalidate) await revalidate();
+      } else {
+        toast.error("Senha incorreta");
+      }
+    } catch (err) {
+      toast.error("Erro ao conectar ao servidor");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
 
   const { data: unreadData } = trpc.notifications.unreadCount.useQuery(undefined, {
     refetchInterval: 30000,
@@ -90,7 +118,7 @@ export default function CyberpunkLayout({ children }: { children: React.ReactNod
         <div className="text-center">
           <div className="font-display text-2xl neon-pink mb-4">CARREGANDO</div>
           <div className="flex gap-1 justify-center">
-            {[0,1,2].map(i => (
+            {[0, 1, 2].map(i => (
               <div key={i} className="w-2 h-2 rounded-full bg-[#ff2d78] animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
             ))}
           </div>
@@ -106,11 +134,26 @@ export default function CyberpunkLayout({ children }: { children: React.ReactNod
           <div className="font-display text-3xl neon-pink mb-2">BOT</div>
           <div className="font-display text-3xl neon-cyan mb-6">DASHBOARD</div>
           <p className="text-[#6b6b8a] text-sm mb-8 font-mono-cyber">SISTEMA DE CONTROLE CENTRALIZADO</p>
-          <a href={getLoginUrl()}
-            className="block w-full py-3 text-center font-display text-xs tracking-widest uppercase text-white rounded-sm transition-all"
-            style={{ background: "linear-gradient(135deg, #ff2d78, #c0006a)", border: "1px solid #ff2d78", boxShadow: "0 0 20px rgba(255,45,120,0.3)" }}>
-            ACESSAR SISTEMA
-          </a>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b6b8a]" size={16} />
+              <input
+                type="password"
+                placeholder="SENHA DO SISTEMA"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-[#0a0a15] border border-[#1a1a2e] rounded-sm py-2.5 pl-10 pr-4 text-sm font-mono-cyber text-[#e0e0f0] focus:outline-none focus:border-[#ff2d78] focus:ring-1 focus:ring-[#ff2d78] transition-all"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isLoggingIn}
+              className="w-full py-3 text-center font-display text-xs tracking-widest uppercase text-white rounded-sm transition-all disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #ff2d78, #c0006a)", border: "1px solid #ff2d78", boxShadow: "0 0 20px rgba(255,45,120,0.3)" }}>
+              {isLoggingIn ? "AUTENTICANDO..." : "ACESSAR SISTEMA"}
+            </button>
+          </form>
         </div>
       </div>
     );
