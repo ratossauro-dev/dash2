@@ -11,12 +11,8 @@
     ],
     "rewrites": [
         {
-            "source": "/api/trpc/:path*",
-            "destination": "https://botdashboardbackend.discloud.app/api/trpc/:path*"
-        },
-        {
-            "source": "/api/bot/:path*",
-            "destination": "https://botdashboardbackend.discloud.app/api/bot/:path*"
+            "source": "/api/:path*",
+            "destination": "https://botdashboardbackend.discloud.app/api/:path*"
         },
         {
             "source": "/(.*)",
