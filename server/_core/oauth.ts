@@ -9,7 +9,10 @@ export function registerOAuthRoutes(app: Express) {
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     const { password } = req.body;
 
+    console.log(`[Auth] Attempting login. Received password length: ${password?.length || 0}, Expected password length: ${ENV.dashboardPassword.length}`);
+
     if (!password || password !== ENV.dashboardPassword) {
+      console.warn(`[Auth] Login failed. Received: "${password ? '***' : 'empty'}", Expected: "${ENV.dashboardPassword === 'admin' ? 'admin (default)' : 'custom'}"`);
       res.status(401).json({ error: "Invalid password" });
       return;
     }

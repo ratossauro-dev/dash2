@@ -7,3 +7,5 @@ export const ENV = {
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
 };
+
+console.log(`[Env] DASHBOARD_PASSWORD loaded: "${ENV.dashboardPassword}" (length: ${ENV.dashboardPassword.length})`);
