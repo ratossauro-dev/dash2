@@ -47,13 +47,8 @@ async function startServer() {
   // Public REST API for bots (no auth middleware needed — token validated inside)
   app.use("/api/bot", botRouter);
 
-  // development mode uses Vite, production mode uses static files
-  if (process.env.NODE_ENV === "development") {
-    const { setupVite } = await import("./vite");
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  // production mode uses static files
+  serveStatic(app);
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
