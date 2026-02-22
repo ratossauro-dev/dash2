@@ -10,7 +10,6 @@ export function registerOAuthRoutes(app: Express) {
     const { password } = req.body;
 
     if (!password || password !== ENV.dashboardPassword) {
-      console.warn(`[Auth] Login attempt failed. Received password length: ${password?.length || 0}`);
       res.status(401).json({ error: "Invalid password" });
       return;
     }
