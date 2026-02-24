@@ -45,6 +45,9 @@ export async function getDb() {
         connectionLimit: 10,
         enableKeepAlive: true,
         keepAliveInitialDelay: 10000,
+        connectTimeout: 10000, // 10 seconds timeout for initial connection
+        waitForConnections: true,
+        queueLimit: 0,
       });
       _db = drizzle(_pool);
       console.log("[Database] Connection pool initialized");

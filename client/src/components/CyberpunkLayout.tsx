@@ -84,16 +84,43 @@ export default function CyberpunkLayout({ children }: { children: React.ReactNod
     return () => clearInterval(timer);
   }, []);
 
+  const [showRefresh, setShowRefresh] = useState(false);
+
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => setShowRefresh(true), 15000); // Show refresh after 15s
+      return () => clearTimeout(timer);
+    } else {
+      setShowRefresh(false);
+    }
+  }, [loading]);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050508] flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-[#050508] flex items-center justify-center p-4">
+        <div className="text-center max-w-sm">
           <div className="font-display text-2xl neon-pink mb-4">CARREGANDO</div>
-          <div className="flex gap-1 justify-center">
+          <div className="flex gap-1 justify-center mb-8">
             {[0, 1, 2].map(i => (
               <div key={i} className="w-2 h-2 rounded-full bg-[#ff2d78] animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
             ))}
           </div>
+
+          {showRefresh && (
+            <div className="space-y-4 animate-in fade-in duration-700">
+              <p className="text-[#6b6b8a] text-sm font-mono-cyber leading-relaxed">
+                O sistema está demorando mais que o esperado para responder.
+                Isso pode acontecer se o servidor estiver "acordando" ou
+                houver instabilidade na conexão.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2 bg-[rgba(255,45,120,0.1)] border border-[#ff2d78] text-[#ff2d78] text-sm font-display hover:bg-[#ff2d78] hover:text-white transition-all duration-300 neon-shadow-pink"
+              >
+                RECARREGAR DASHBOARD
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
