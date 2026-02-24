@@ -39,26 +39,44 @@ let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
-    console.log("[Database] Initializing with URL:", process.env.DATABASE_URL.substring(0, 15) + "...");
+    console.log("[Database] Initializing connection pool...");
     try {
+      // For Aiven/PlanetScale/DigitalOcean, we often need SSL and to be lenient with unauthorized certs in some environments
+      // or at least handle the connection explicitly.
       _pool = mysql.createPool({
         uri: process.env.DATABASE_URL,
         connectionLimit: 10,
         enableKeepAlive: true,
         keepAliveInitialDelay: 10000,
-        connectTimeout: 10000,
+        connectTimeout: 20000, // Increased timeout
         waitForConnections: true,
         queueLimit: 0,
+        ssl: {
+          rejectUnauthorized: false // Often needed for Aiven/Render connection if CA is not provided
+        }
       });
-      console.log("[Database] Pool created");
+
+      console.log("[Database] Pool created. Testing connection...");
+
+      // Test the connection immediately
+      const connection = await _pool.getConnection();
+      console.log("[Database] Successfully connected to the server");
+      connection.release();
+
       _db = drizzle(_pool);
-      console.log("[Database] Drizzle instance initialized");
-    } catch (error) {
-      console.error("[Database] Critical initialization error:", error);
+      console.log("[Database] Drizzle instance ready");
+    } catch (error: any) {
+      console.error("[Database] CRITICAL CONNECTION ERROR:", {
+        message: error.message,
+        code: error.code,
+        errno: error.errno,
+        sqlState: error.sqlState,
+        stack: error.stack
+      });
       _db = null;
     }
   } else if (!_db) {
-    console.warn("[Database] No DATABASE_URL found in environment");
+    console.warn("[Database] Cannot initialize: DATABASE_URL is missing");
   }
   return _db;
 }
