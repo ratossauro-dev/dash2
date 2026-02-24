@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { notifyOwner } from "./notification";
-import { adminProcedure, publicProcedure, router } from "./trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "./trpc";
 import { getTableList } from "../db";
 
 export const systemRouter = router({
@@ -28,7 +28,7 @@ export const systemRouter = router({
       } as const;
     }),
 
-  dbCheck: publicProcedure.query(async () => {
+  dbCheck: protectedProcedure.query(async () => {
     const tables = await getTableList();
     console.log("[Diagnostics] Tables found in DB:", tables);
     return { tables };
