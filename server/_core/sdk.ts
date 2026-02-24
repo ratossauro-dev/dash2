@@ -126,8 +126,12 @@ class SDKServer {
         });
         return user;
       }
-    } catch (error) {
-      console.warn("[Auth] Database authentication failed, using fallback admin", String(error));
+    } catch (error: any) {
+      console.warn("[Auth] Database authentication failed", {
+        message: error.message,
+        sqlMessage: error.sqlMessage,
+        code: error.code,
+      });
     }
 
     // Fallback static user to prevent app from breaking if DB is down

@@ -63,7 +63,7 @@ export async function getDb() {
       console.log("[Database] Successfully connected to the server");
       connection.release();
 
-      _db = drizzle(_pool);
+      _db = drizzle(_pool) as any;
       console.log("[Database] Drizzle instance ready");
     } catch (error: any) {
       console.error("[Database] CRITICAL CONNECTION ERROR:", {
@@ -81,6 +81,22 @@ export async function getDb() {
   return _db;
 }
 
+
+// ─── Diagnostics ─────────────────────────────────────────────────────────────
+
+export async function getTableList(): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return ["DB Not Available"];
+  try {
+    const result = await db.execute(sql`SHOW TABLES`);
+    // result[0] contains the rows in mysql2
+    const [rows] = result as unknown as [any[], any];
+    return rows.map(row => Object.values(row)[0] as string);
+  } catch (error) {
+    console.error("[Database] Failed to list tables:", error);
+    return [];
+  }
+}
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 
@@ -103,7 +119,16 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   else if (user.openId === ENV.ownerOpenId) { values.role = "admin"; updateSet.role = "admin"; }
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+  try {
+    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+  } catch (error: any) {
+    console.error("[Database] upsertUser failed:", {
+      message: error.message,
+      sqlMessage: error.sqlMessage,
+      code: error.code
+    });
+    throw error;
+  }
 }
 
 export async function getUserByOpenId(openId: string) {
