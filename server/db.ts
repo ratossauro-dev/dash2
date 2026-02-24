@@ -39,22 +39,26 @@ let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
+    console.log("[Database] Initializing with URL:", process.env.DATABASE_URL.substring(0, 15) + "...");
     try {
       _pool = mysql.createPool({
         uri: process.env.DATABASE_URL,
         connectionLimit: 10,
         enableKeepAlive: true,
         keepAliveInitialDelay: 10000,
-        connectTimeout: 10000, // 10 seconds timeout for initial connection
+        connectTimeout: 10000,
         waitForConnections: true,
         queueLimit: 0,
       });
+      console.log("[Database] Pool created");
       _db = drizzle(_pool);
-      console.log("[Database] Connection pool initialized");
+      console.log("[Database] Drizzle instance initialized");
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.error("[Database] Critical initialization error:", error);
       _db = null;
     }
+  } else if (!_db) {
+    console.warn("[Database] No DATABASE_URL found in environment");
   }
   return _db;
 }
