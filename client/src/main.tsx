@@ -11,6 +11,8 @@ import "./index.css";
 const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
+  // Redirection disabled per user request to remove login
+  /*
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
 
@@ -19,6 +21,7 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!isUnauthorized) return;
 
   window.location.href = getLoginUrl();
+  */
 };
 
 queryClient.getQueryCache().subscribe(event => {

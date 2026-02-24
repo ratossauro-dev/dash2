@@ -99,30 +99,49 @@ class SDKServer {
 
   async authenticateRequest(req: Request): Promise<User> {
     // Auto-authenticate as admin (no login required)
-    const adminOpenId = ENV.ownerOpenId;
+    const adminOpenId = ENV.ownerOpenId || "admin";
 
-    let user = await db.getUserByOpenId(adminOpenId);
+    try {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) {
+        throw new Error("Database not initialized");
+      }
 
-    if (!user) {
-      await db.upsertUser({
-        openId: adminOpenId,
-        name: "Admin",
-        role: "admin",
-        lastSignedIn: new Date(),
-      });
-      user = await db.getUserByOpenId(adminOpenId);
+      let user = await db.getUserByOpenId(adminOpenId);
+
+      if (!user) {
+        await db.upsertUser({
+          openId: adminOpenId,
+          name: "Admin",
+          role: "admin",
+          lastSignedIn: new Date(),
+        });
+        user = await db.getUserByOpenId(adminOpenId);
+      }
+
+      if (user) {
+        await db.upsertUser({
+          openId: user.openId,
+          lastSignedIn: new Date(),
+        });
+        return user;
+      }
+    } catch (error) {
+      console.warn("[Auth] Database authentication failed, using fallback admin", String(error));
     }
 
-    if (!user) {
-      throw ForbiddenError("Could not create admin user");
-    }
-
-    await db.upsertUser({
-      openId: user.openId,
+    // Fallback static user to prevent app from breaking if DB is down
+    return {
+      id: 0,
+      openId: adminOpenId,
+      name: "Admin (Offline)",
+      email: null,
+      role: "admin",
+      loginMethod: "local",
       lastSignedIn: new Date(),
-    });
-
-    return user;
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as User;
   }
 }
 

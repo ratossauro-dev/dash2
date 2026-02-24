@@ -62,6 +62,8 @@ export function useAuth(options?: UseAuthOptions) {
   ]);
 
   useEffect(() => {
+    // Redirection disabled per user request to remove login
+    /*
     if (!redirectOnUnauthenticated) return;
     if (meQuery.isLoading || logoutMutation.isPending) return;
     if (state.user) return;
@@ -69,6 +71,7 @@ export function useAuth(options?: UseAuthOptions) {
     if (window.location.pathname === redirectPath) return;
 
     window.location.href = redirectPath
+    */
   }, [
     redirectOnUnauthenticated,
     redirectPath,
